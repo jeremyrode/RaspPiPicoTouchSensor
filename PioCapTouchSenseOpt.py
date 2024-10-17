@@ -2,29 +2,24 @@ import time
 import machine
 import rp2
 
-@rp2.asm_pio(set_init=rp2.PIO.OUT_LOW, autopull=False, pull_thresh=32, autopush=False, push_thresh=32)
+@rp2.asm_pio(set_init=rp2.PIO.OUT_LOW, sideset_init=rp2.PIO.OUT_LOW, autopush=True, push_thresh=32)
 def detectTouch():                                         # type: ignore
-    pull(block)                 # Get charge delay val     # type: ignore
-    mov(x,osr)                  # Load charge delay val    # type: ignore
-    wrap_target()               # Only do the above once   # type: ignore
-    mov(y, invert(null))        # Set Y to Large (All Ones)# type: ignore
-    set(pins, 1)                # Start Charging           # type: ignore
+    wrap_target()                                          # type: ignore
+    mov(y, invert(null)).side(1) #Set Y to Large (All Ones)# type: ignore
     label("innerloop")                                     # type: ignore
     jmp(pin, "loopescape")      # If Pin is High, Escape   # type: ignore
     jmp(y_dec, "innerloop")     # Loop and decrement Y     # type: ignore
     label("loopescape")                                    # type: ignore
-    mov(isr,y)                  # Move Y to Output SR      # type: ignore
-    set(pins, 0)                # Discharge                # type: ignore
-    push(noblock)               # Push Y                   # type: ignore
-    mov(y,x)                    # Load charge delay val    # type: ignore
-    label("chargeloop")                                    # type: ignore
-    jmp(y_dec, "chargeloop")     # If !Zero, X-- and loop  # type: ignore
+    mov(isr,y).side(0)          # Move Y to Output SR      # type: ignore
+    set(y,31).delay(15)         # Load charge delay val    # type: ignore
+    label("charge")                                        # type: ignore
+    jmp(y_dec, "charge").delay(15)     # If !Zero, X-- and loop  # type: ignore
     wrap()                                                 # type: ignore
 
 # Turn off internal pull up on jmp pin, will overwhelm 10 MOhm
 sense = machine.Pin(12, mode=machine.Pin.IN, pull=None)
 # Create the State Machine, a 1 MegaOhm resistor from set_base pin to jmp_pin is needed
-sm = rp2.StateMachine(0, detectTouch, freq=125_000_000, set_base=machine.Pin(9), jmp_pin=machine.Pin(12))
+sm = rp2.StateMachine(0, detectTouch, freq=125_000_000, sideset_base=machine.Pin(9), jmp_pin=machine.Pin(12))
 
 # Start the State Machine.
 sm.active(1)
