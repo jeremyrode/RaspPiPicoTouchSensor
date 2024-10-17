@@ -7,7 +7,7 @@ This code uses a PIO state machine to repeatadly charge via an output pin and 1 
 The userspace code calibrates the baseline charge time with an IIR filter, and if a difference (here 500 cyles or 4 us) in the charge time is detected a touch even is registered.  The touch detection is debounced via a time delay gate, as a single human touch event can trigger multiple detections.
 
 ## Improvements
-Work in progress (PioCapTouchSenseOpt.py)
+Work in progress (PioCapTouchSenseOpt.py) and untested.
 
 
 -Use sideset to toggle charge pin (Saves 2 instructions)
